@@ -1,0 +1,10 @@
+services:
+  db:
+    image: postgres:15
+    container_name: teamboard-db
+    environment:
+      POSTGRES_DB: teamboard
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"

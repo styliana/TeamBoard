@@ -16,8 +16,11 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputPath": "dist/teamboard-frontend",
+            "index": "src/index.html",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "polyfills": [ ],
             "assets": [
               {
                 "glob": "**/*",
@@ -26,7 +29,8 @@
             ],
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "scripts": []
           },
           "configurations": {
             "production": {

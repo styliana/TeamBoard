@@ -1,18 +1,13 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core'; // USUNIĘTO 'Experimental'
 import { provideHttpClient } from '@angular/common/http';
-
+import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Optymalizacja detekcji zmian
-    provideZoneChangeDetection({ eventCoalescing: true }),
-
-    // Konfiguracja ścieżek aplikacji
+    // Teraz używamy stabilnej wersji mechanizmu bez Zone.js
+    provideZonelessChangeDetection(),
     provideRouter(routes),
-
-    // Rejestracja klienta HTTP - bez tego AdService nie zadziała
-    provideHttpClient()
+    provideHttpClient() // To musi tu być, żeby Angular mógł pobrać ogłoszenia z Javy
   ]
 };

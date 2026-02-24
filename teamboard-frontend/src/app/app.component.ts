@@ -6,8 +6,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  templateUrl: './app.html',        // POPRAWIONE: bez "/services/" i z dobrą nazwą
+  styleUrls: ['./app.component.css']          // POPRAWIONE: tak się nazywa Twój plik na liście
 })
 export class AppComponent implements OnInit {
   ads: any[] = [];

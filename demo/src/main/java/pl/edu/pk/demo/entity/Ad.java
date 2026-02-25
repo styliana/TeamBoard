@@ -7,27 +7,25 @@ import jakarta.persistence.Id;
 
 @Entity
 public class Ad {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String title;
     private String description;
-    private String category; // To nasze "Kraków" lub kategoria
+    private String category;
+    private String author;
+    private int participantsCount = 0; // Licznik uczestników
 
-    // 1. Pusty konstruktor - WYMAGANY przez JPA (Hibernate)
-    public Ad() {
-    }
+    public Ad() {}
 
-    // 2. Konstruktor z argumentami - To jego brakował w DemoApplication!
-    public Ad(String title, String description, String category) {
+    public Ad(String title, String description, String category, String author) {
         this.title = title;
         this.description = description;
         this.category = category;
+        this.author = author;
     }
 
-    // Gettery i Settery (potrzebne, żeby dane "płynęły" do Angulara)
+    // Gettery i Settery
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
@@ -36,4 +34,8 @@ public class Ad {
     public void setDescription(String description) { this.description = description; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getAuthor() { return author; }
+    public void setAuthor(String author) { this.author = author; }
+    public int getParticipantsCount() { return participantsCount; }
+    public void setParticipantsCount(int participantsCount) { this.participantsCount = participantsCount; }
 }

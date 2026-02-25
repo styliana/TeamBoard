@@ -1,19 +1,12 @@
-Write-Host "☕ Parzę TeamBoard... Chwileczkę!" -ForegroundColor Brown
+Write-Host "☕ Odpalam Twój projekt Full-Stack..." -ForegroundColor Cyan
 
-# 1. Uruchomienie bazy danych w Dockerze
-Write-Host "🐘 Odpalam PostgreSQL w Dockerze..." -ForegroundColor Cyan
-Set-Location "$PSScriptRoot\demo"
-docker-compose up -d
-Set-Location $PSScriptRoot
+# 1. Baza
+Set-Location demo; docker-compose up -d; Set-Location ..
 
-# 2. Uruchomienie Backend (Spring Boot)
-Write-Host "🍃 Odpalam Spring Boot (Backend)..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\demo'; .\mvnw spring-boot:run"
+# 2. Backend
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd demo; taskkill /F /IM java.exe; .\mvnw spring-boot:run"
 
-# 3. Uruchomienie Frontend (Angular)
-Write-Host "🅰️ Odpalam Angular (Frontend)..." -ForegroundColor Red
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\teamboard-frontend'; npm start"
+# 3. Frontend
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd teamboard-frontend; npm start"
 
-Write-Host "✅ Skrypty startowe wysłane! " -ForegroundColor Yellow
-Write-Host "🌐 Frontend będzie pod: http://localhost:4200"
-Write-Host "⚙️ Backend API pod: http://localhost:8080/api/ads"
+Write-Host "🚀 Wszystko gotowe! Sprawdź http://localhost:4200" -ForegroundColor Green

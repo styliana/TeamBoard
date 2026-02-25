@@ -9,22 +9,16 @@ import pl.edu.pk.demo.repository.AdRepository;
 
 @SpringBootApplication
 public class DemoApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
     }
 
-    @Bean // Ta adnotacja mówi Springowi, żeby uruchomił tę metodę przy starcie
+    @Bean
     CommandLineRunner init(AdRepository repository) {
         return args -> {
-            // Czyścimy bazę przed dodaniem, żeby nie dublować ogłoszeń przy każdym restarcie
             repository.deleteAll();
-
-            // Dodajemy testowe ogłoszenia
-            repository.save(new Ad("Kawa u Styliany", "Zapraszam na espresso i wspólne debugowanie frontendu!", "Kraków"));
-            repository.save(new Ad("Java Masterclass", "Nauka Spring Boota przy dobrej kawie.", "Warszawa"));
-
-            System.out.println("☕ Kawusia została zaparzona i dodana do bazy PostgreSQL!");
+            repository.save(new Ad("Espresso u Styliany", "Debugowanie i kawa!", "Kraków", "Styliana"));
+            repository.save(new Ad("Java Masterclass", "Spring Boot od podstaw.", "Warszawa", "Admin"));
         };
     }
 }

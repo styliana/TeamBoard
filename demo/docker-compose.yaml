@@ -1,10 +1,15 @@
 services:
   db:
-    image: postgres:15
-    container_name: teamboard-db
+    image: postgres:16
+    container_name: coffee_db
     environment:
-      POSTGRES_DB: teamboard
+      POSTGRES_DB: coffee_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
+    volumes:
+      - [cite_start]coffee_data:/var/lib/postgresql/data  # To ratuje Twoje dane!
+
+volumes:
+  coffee_data:

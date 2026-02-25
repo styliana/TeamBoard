@@ -1,16 +1,26 @@
 <div class="container py-5">
-
   <div class="text-center mb-5">
-    <h1 class="display-4 fw-bold coffee-title">
-      <i class="bi bi-cup-hot-fill me-2"></i> TeamBoard Coffee
-    </h1>
-    <p class="lead text-muted">Gdzie kod spotyka się z kofeiną. Znajdź swoją parę!</p>
+    <h1 class="coffee-title display-4 fw-bold">TeamBoard Coffee ☕</h1>
   </div>
 
-  <div class="alert coffee-alert shadow-sm mb-5 d-flex align-items-center">
-    <i class="bi bi-info-circle-fill me-3 fs-4"></i>
-    <div>
-      <strong>Status Kawiarni:</strong> Pobranych ogłoszeń: <span class="badge bg-brown ms-2">{{ ads.length }}</span>
+  <div *ngIf="!currentUser" class="card coffee-card mb-4 p-4 text-center shadow-sm">
+    <h4 class="coffee-text">Przedstaw się, by dołączyć:</h4>
+    <div class="d-flex justify-content-center mt-3">
+      <input #uName type="text" class="form-control w-50 rounded-pill me-2" placeholder="Twoje imię...">
+      <button (click)="setIdentity(uName.value)" class="btn btn-coffee px-4">Zatwierdź</button>
+    </div>
+  </div>
+
+  <div *ngIf="currentUser" class="card coffee-card mb-5 p-4 shadow-sm">
+    <div class="d-flex justify-content-between mb-3">
+      <h4 class="coffee-text fw-bold">Cześć, {{ currentUser }}!</h4>
+      <button (click)="logout()" class="btn btn-sm btn-outline-danger">Zmień imię</button>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6"><input [(ngModel)]="newAd.title" class="form-control" placeholder="Tytuł"></div>
+      <div class="col-md-6"><input [(ngModel)]="newAd.category" class="form-control" placeholder="Miasto"></div>
+      <div class="col-12"><textarea [(ngModel)]="newAd.description" class="form-control" placeholder="Opisz spotkanie..."></textarea></div>
+      <div class="col-12 text-end"><button (click)="saveAd()" class="btn btn-coffee px-5">Opublikuj ☕</button></div>
     </div>
   </div>
 
@@ -18,16 +28,24 @@
     <div class="col-md-6 col-lg-4" *ngFor="let ad of ads">
       <div class="card h-100 coffee-card border-0 shadow-sm">
         <div class="card-body p-4 d-flex flex-column">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <h5 class="card-title fw-bold coffee-text mb-0 pe-3">{{ ad.title }}</h5>
-            <span class="badge bg-brown rounded-pill px-3 py-2">
-              <i class="bi bi-geo-alt-fill me-1"></i> {{ ad.category }}
-            </span>
+          <div class="d-flex justify-content-between mb-2">
+            <h5 class="fw-bold coffee-text">{{ ad.title }}</h5>
+            <span class="badge bg-brown rounded-pill">{{ ad.category }}</span>
           </div>
-          <p class="card-text text-muted flex-grow-1">{{ ad.description }}</p>
-          <button class="btn btn-coffee w-100 mt-3 fw-bold">
-            <i class="bi bi-cup-fill me-2"></i> Aplikuj na kawę
-          </button>
+          <p class="text-muted flex-grow-1">{{ ad.description }}</p>
+          <div class="mt-auto pt-2 border-top">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <p class="small text-muted mb-0">Zaprasza: <strong>{{ ad.author }}</strong></p>
+              <span class="badge bg-light text-dark shadow-sm">
+                <i class="bi bi-people-fill me-1"></i> {{ ad.participantsCount }} osób
+              </span>
+            </div>
+            <button (click)="markAsPresent(ad)"
+                    [disabled]="ad.author === currentUser"
+                    [class]="ad.author === currentUser ? 'btn btn-outline-secondary w-100' : (ad.userJoined ? 'btn btn-success w-100' : 'btn btn-coffee w-100')">
+              {{ ad.author === currentUser ? 'Twoje ogłoszenie' : (ad.userJoined ? 'Dołączono!' : 'Chcę dołączyć') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

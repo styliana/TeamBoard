@@ -1,74 +1,108 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // 1. Potrzebne do obsługi formularzy
+import { FormsModule } from '@angular/forms';
 import { AdService } from './services/ad.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  // 2. Dodajemy FormsModule tutaj, by naprawić błąd NG8002
   imports: [CommonModule, FormsModule],
   templateUrl: './app.html',
   styleUrls: ['./app.component.css']
 })
 export class App implements OnInit {
   ads: any[] = [];
-
-  // 3. Tożsamość użytkownika (naprawia błędy o 'currentUser')
   currentUser: string = '';
-
-  // 4. Obiekt dla formularza (naprawia błędy o 'newAd')
-  newAd = {
-    title: '',
-    description: '',
-    category: '',
-    author: ''
-  };
+  // Właściwość wymagana do przełączania między logowaniem a rejestracją
+  isRegisterMode: boolean = false;
+  newAd = { title: '', description: '', category: '', author: '' };
 
   constructor(private adService: AdService) {}
 
   ngOnInit() {
-    // Sprawdzamy, czy użytkownik jest już w pamięci przeglądarki
-    const savedUser = localStorage.getItem('coffee_user');
-    if (savedUser) {
-      this.currentUser = savedUser;
+    // Odzyskanie sesji użytkownika z localStorage przy starcie aplikacji
+    this.currentUser = localStorage.getItem('coffee_user') || '';
+    if (this.currentUser) {
+      this.loadAds();
     }
-    this.loadAds();
   }
 
   loadAds() {
-    this.adService.getAds().subscribe(data => {
-      this.ads = data;
+    this.adService.getAds().subscribe({
+      next: (data) => this.ads = data,
+      error: (err) => console.error('Błąd pobierania danych:', err)
     });
   }
 
-  // 5. Metoda do ustawiania imienia (naprawia błąd 'setIdentity')
-  setIdentity(name: string) {
-    if (name.trim()) {
-      this.currentUser = name;
-      localStorage.setItem('coffee_user', name);
+  /**
+   * Metoda obsługująca autoryzację (logowanie lub rejestrację)
+   * Wywoływana z poziomu szablonu HTML
+   */
+  handleAuth(name: string, pass: string) {
+    if (!name || !pass) return;
+
+    if (this.isRegisterMode) {
+      // Wywołanie metody rejestracji w serwisie (wymóg dynamicznej tożsamości)
+      this.adService.register({username: name, password: pass}).subscribe({
+        next: () => {
+          alert('Zarejestrowano pomyślnie! Teraz możesz się zalogować.');
+          this.isRegisterMode = false;
+        },
+        error: (err) => alert('Błąd rejestracji: ' + (err.error?.message || 'Spróbuj ponownie'))
+      });
+    } else {
+      // Wywołanie standardowej logiki logowania Basic Auth
+      this.setIdentity(name, pass);
     }
   }
 
-  // 6. Wylogowanie (naprawia błąd 'logout')
+  setIdentity(name: string, pass: string) {
+    // Przygotowanie nagłówka Basic Auth (wymóg na 4.0)
+    const authString = 'Basic ' + btoa(`${name}:${pass}`);
+    localStorage.setItem('coffee_auth', authString);
+    localStorage.setItem('coffee_user', name);
+    this.currentUser = name;
+    this.loadAds();
+  }
+
   logout() {
     this.currentUser = '';
     localStorage.removeItem('coffee_user');
+    localStorage.removeItem('coffee_auth');
+    this.ads = [];
   }
 
-  // 7. Zapisywanie ogłoszenia (naprawia błąd 'saveAd')
   saveAd() {
     if (this.newAd.title && this.newAd.description) {
-      this.newAd.author = this.currentUser; // Automatycznie przypisz autora
+      this.newAd.author = this.currentUser;
       this.adService.addAd(this.newAd).subscribe(() => {
-        this.loadAds(); // Odśwież listę po dodaniu
-        this.newAd = { title: '', description: '', category: '', author: '' }; // Wyczyść form
+        this.loadAds();
+        this.newAd = { title: '', description: '', category: '', author: '' };
       });
     }
   }
 
-  // 8. Logika przycisku obecności (naprawia błąd 'markAsPresent')
   markAsPresent(ad: any) {
-    ad.userJoined = !ad.userJoined;
+    // Blokada dla autora oraz osób, które już dołączyły (poprawa logiki i wydajności)
+    if (ad.author === this.currentUser || ad.alreadyJoined) return;
+
+    this.adService.joinAd(ad.id).subscribe({
+      next: (updatedAd) => {
+        // Aktualizacja tylko jednego kafelka zamiast przeładowania całej listy
+        const index = this.ads.findIndex(a => a.id === updatedAd.id);
+        if (index !== -1) {
+          this.ads[index] = { ...updatedAd, alreadyJoined: true };
+        }
+      },
+      error: (err) => console.error('Błąd:', err)
+    });
+  }
+
+  /**
+   * Metoda naprawiająca błąd TS2339
+   * Pomaga Angularowi identyfikować elementy listy, co zapobiega "skakaniu" kafelków
+   */
+  trackByAdId(index: number, ad: any): number {
+    return ad.id;
   }
 }

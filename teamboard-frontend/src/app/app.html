@@ -4,17 +4,25 @@
   </div>
 
   <div *ngIf="!currentUser" class="card coffee-card mb-4 p-4 text-center shadow-sm">
-    <h4 class="coffee-text">Przedstaw się, by dołączyć:</h4>
-    <div class="d-flex justify-content-center mt-3">
-      <input #uName type="text" class="form-control w-50 rounded-pill me-2" placeholder="Twoje imię...">
-      <button (click)="setIdentity(uName.value)" class="btn btn-coffee px-4">Zatwierdź</button>
+    <h4 class="coffee-text fw-bold">
+      {{ isRegisterMode ? 'Stwórz konto' : 'Zaloguj się' }} ☕
+    </h4>
+    <div class="d-flex flex-column align-items-center mt-3">
+      <input #uName type="text" class="form-control w-50 rounded-pill mb-2" placeholder="Nazwa użytkownika">
+      <input #uPass type="password" class="form-control w-50 rounded-pill mb-2" placeholder="Hasło">
+      <button (click)="handleAuth(uName.value, uPass.value)" class="btn btn-coffee px-5">
+        {{ isRegisterMode ? 'Zarejestruj mnie' : 'Zaloguj i wejdź' }}
+      </button>
+      <a (click)="isRegisterMode = !isRegisterMode" class="mt-3 small" style="cursor: pointer; color: #4b3832;">
+        {{ isRegisterMode ? 'Masz już konto? Zaloguj się' : 'Nie masz konta? Zarejestruj się' }}
+      </a>
     </div>
   </div>
 
   <div *ngIf="currentUser" class="card coffee-card mb-5 p-4 shadow-sm">
     <div class="d-flex justify-content-between mb-3">
       <h4 class="coffee-text fw-bold">Cześć, {{ currentUser }}!</h4>
-      <button (click)="logout()" class="btn btn-sm btn-outline-danger">Zmień imię</button>
+      <button (click)="logout()" class="btn btn-sm btn-outline-danger">Wyloguj</button>
     </div>
     <div class="row g-3">
       <div class="col-md-6"><input [(ngModel)]="newAd.title" class="form-control" placeholder="Tytuł"></div>
@@ -25,7 +33,7 @@
   </div>
 
   <div class="row g-4">
-    <div class="col-md-6 col-lg-4" *ngFor="let ad of ads">
+    <div class="col-md-6 col-lg-4" *ngFor="let ad of ads; trackBy: trackByAdId">
       <div class="card h-100 coffee-card border-0 shadow-sm">
         <div class="card-body p-4 d-flex flex-column">
           <div class="d-flex justify-content-between mb-2">
@@ -35,15 +43,15 @@
           <p class="text-muted flex-grow-1">{{ ad.description }}</p>
           <div class="mt-auto pt-2 border-top">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <p class="small text-muted mb-0">Zaprasza: <strong>{{ ad.author }}</strong></p>
-              <span class="badge bg-light text-dark shadow-sm">
-                <i class="bi bi-people-fill me-1"></i> {{ ad.participantsCount }} osób
-              </span>
+              <p class="small text-muted mb-0">Organizator: <strong>{{ ad.author }}</strong></p>
+              <span class="badge bg-light text-dark shadow-sm">{{ ad.participantsCount }} chętnych</span>
             </div>
             <button (click)="markAsPresent(ad)"
-                    [disabled]="ad.author === currentUser"
-                    [class]="ad.author === currentUser ? 'btn btn-outline-secondary w-100' : (ad.userJoined ? 'btn btn-success w-100' : 'btn btn-coffee w-100')">
-              {{ ad.author === currentUser ? 'Twoje ogłoszenie' : (ad.userJoined ? 'Dołączono!' : 'Chcę dołączyć') }}
+                    [disabled]="ad.author === currentUser || ad.participantNames.includes(currentUser)"
+                    [class]="ad.participantNames.includes(currentUser) ? 'btn btn-success w-100' : 'btn btn-coffee w-100'">
+
+              {{ ad.author === currentUser ? 'Twoje ogłoszenie' :
+              (ad.participantNames.includes(currentUser) ? 'Dołączono! ✓' : 'Chcę dołączyć! ☕') }}
             </button>
           </div>
         </div>

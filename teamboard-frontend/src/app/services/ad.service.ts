@@ -5,12 +5,11 @@ import { Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class AdService {
   private apiUrl = 'http://localhost:8080/api/ads';
-  private authUrl = 'http://localhost:8080/api/register';
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders() {
-    const auth = localStorage.getItem('coffee_auth');
+  private getHeaders(customAuth?: string) {
+    const auth = customAuth || localStorage.getItem('coffee_auth');
     return {
       headers: new HttpHeaders({
         'Authorization': auth ? auth : '',
@@ -18,6 +17,7 @@ export class AdService {
       })
     };
   }
+
 
   getAds(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrl, this.getHeaders());
@@ -27,12 +27,23 @@ export class AdService {
     return this.http.post(this.apiUrl, ad, this.getHeaders());
   }
 
+
   joinAd(id: number): Observable<any> {
     return this.http.patch(`${this.apiUrl}/${id}/join`, {}, this.getHeaders());
   }
 
-  // Metoda do rejestracji
+  getAdsWithAuth(auth: string): Observable<any[]> {
+    return this.http.get<any[]>(this.apiUrl, {
+      headers: new HttpHeaders({ 'Authorization': auth })
+    });
+  }
+
+  deleteAd(id: number): Observable<any> {
+    // Nagłówki z Authorization: Basic są dodawane w getHeaders()
+    return this.http.delete(`${this.apiUrl}/${id}`, this.getHeaders());
+  }
+
   register(user: any): Observable<any> {
-    return this.http.post(this.authUrl, user);
+    return this.http.post('http://localhost:8080/api/register', user);
   }
 }

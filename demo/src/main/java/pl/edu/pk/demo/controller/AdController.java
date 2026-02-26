@@ -1,5 +1,6 @@
 package pl.edu.pk.demo.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.pk.demo.entity.Ad;
 import pl.edu.pk.demo.repository.AdRepository;
@@ -21,22 +22,34 @@ public class AdController {
         return repository.findAll();
     }
 
-    @PatchMapping("/{id}/join")
-    public Ad joinAd(@PathVariable Long id, Principal principal) {
-        Ad ad = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Nie znaleziono zaproszenia!"));
-
-        String currentUsername = principal.getName();
-
-        // BLOKADA: Jeśli użytkownik już jest na liście, nic nie rób
-        if (ad.getParticipantNames().contains(currentUsername)) {
-            return ad;
-        }
-
-        // Dodajemy użytkownika do zbioru (Set obsłuży unikalność)
-        ad.getParticipantNames().add(currentUsername);
-
-        System.out.println("Użytkownik " + currentUsername + " dołączył do ID " + id);
+    @PostMapping
+    public Ad createAd(@RequestBody Ad ad, java.security.Principal principal) {
+        ad.setAuthor(principal.getName()); // Automatyczne ustawienie autora z sesji
         return repository.save(ad);
+    }
+
+    @PatchMapping("/{id}/join")
+    public Ad joinAd(@PathVariable Long id, java.security.Principal principal) {
+        Ad ad = repository.findById(id).orElseThrow(() -> new RuntimeException("Nie znaleziono!"));
+        String user = principal.getName();
+
+        // Jeśli użytkownika nie ma na liście, dodaj go (blokuje multiklik)
+        if (!ad.getParticipantNames().contains(user)) {
+            ad.getParticipantNames().add(user);
+            return repository.save(ad);
+        }
+        return ad;
+    }
+
+    @DeleteMapping("/{id}")
+    public org.springframework.http.ResponseEntity<?> deleteAd(@PathVariable Long id, java.security.Principal principal) {
+        Ad ad = repository.findById(id).orElseThrow(() -> new RuntimeException("Nie znaleziono!"));
+
+        // Tylko właściciel może usunąć (bezpieczeństwo 4.0+)
+        if (ad.getAuthor().equals(principal.getName())) {
+            repository.delete(ad);
+            return org.springframework.http.ResponseEntity.ok().build();
+        }
+        return org.springframework.http.ResponseEntity.status(403).build();
     }
 }

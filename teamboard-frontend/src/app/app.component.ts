@@ -25,12 +25,6 @@ export class App implements OnInit {
     }
   }
 
-  loadAds() {
-    this.adService.getAds().subscribe({
-      next: (data) => this.ads = data,
-      error: (err) => console.error('Błąd pobierania danych:', err)
-    });
-  }
 
   handleAuth(name: string, pass: string) {
     if (!name || !pass) return;
@@ -88,7 +82,29 @@ export class App implements OnInit {
     });
   }
 
-  // Zapobiega niszczeniu i tworzeniu od nowa elementów DOM (naprawia "skakanie")
+
+  // Dodaj te metody do klasy App
+  removeAd(adId: number) {
+    if (confirm('Usunąć to ogłoszenie?')) {
+      this.adService.deleteAd(adId).subscribe({
+        next: () => this.loadAds(), // Odśwież listę po usunięciu
+        error: (err) => alert('Błąd: ' + (err.error || 'Brak uprawnień'))
+      });
+    }
+  }
+
+// Poprawione loadAds z obsługą participantNames
+  loadAds() {
+    this.adService.getAds().subscribe({
+      next: (data: any[]) => {
+        this.ads = data.map(ad => ({
+          ...ad,
+          participantNames: ad.participantNames || []
+        }));
+      }
+    });
+  }
+
   trackByAdId(index: number, ad: any): number {
     return ad.id;
   }

@@ -1,9 +1,10 @@
-import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZonelessChangeDetection(),
+    // Zmieniamy na standardowy mechanizm odświeżania Angulara
+    provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient()
   ]
 };

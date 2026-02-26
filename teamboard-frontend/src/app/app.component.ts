@@ -14,28 +14,72 @@ export class App implements OnInit {
   ads: any[] = [];
   currentUser: string = '';
   isRegisterMode: boolean = false;
-  newAd = { title: '', description: '', category: '', author: '' };
+  newAd = { title: '', description: '', category: '' };
 
   constructor(private adService: AdService) {}
 
   ngOnInit() {
-    this.currentUser = localStorage.getItem('coffee_user') || '';
-    if (this.currentUser) {
+    const storedUser = localStorage.getItem('coffee_user');
+    if (storedUser) {
+      this.currentUser = storedUser;
       this.loadAds();
     }
   }
 
+  loadAds() {
+    this.adService.getAds().subscribe({
+      next: (data: any[]) => {
+        this.ads = data.map(ad => ({
+          ...ad,
+          participantNames: ad.participantNames || []
+        }));
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          this.logout(); // Wyrzuca, jeśli sesja wygasła lub jest błędna
+        }
+      }
+    });
+  }
+
+  saveAd() {
+    // .trim() usuwa białe znaki z początku i końca, żeby nikt nie wpisał 10 spacji
+    const title = this.newAd.title?.trim() || '';
+    const desc = this.newAd.description?.trim() || '';
+    const cat = this.newAd.category?.trim() || '';
+
+    // Walidacja spójna z backendem (AdRequestDTO)
+    if (title.length < 3 || desc.length < 10 || cat.length === 0) {
+      alert('Tytuł min. 3 znaki, Opis min. 10 znaków, a miasto nie może być puste!');
+      return;
+    }
+
+    const payload = {
+      title: title,
+      description: desc,
+      category: cat
+    };
+
+    this.adService.addAd(payload).subscribe({
+      next: () => {
+        this.newAd = { title: '', description: '', category: '' }; // Najpierw czyścimy formularz
+        this.loadAds(); // Potem odświeżamy listę, a Angular od razu to narysuje!
+      },
+      error: (err) => {
+        console.error('Błąd zapisu:', err);
+        if (err.status === 401) alert('Błąd (401): Brak dostępu. Zaloguj się ponownie.');
+        else if (err.status === 400) alert('Błąd (400): Serwer odrzucił dane (zła długość).');
+        else alert(`Błąd serwera (${err.status}). Sprawdź logi!`);
+      }
+    });
+  }
 
   handleAuth(name: string, pass: string) {
     if (!name || !pass) return;
-
     if (this.isRegisterMode) {
       this.adService.register({username: name, password: pass}).subscribe({
-        next: () => {
-          alert('Zarejestrowano pomyślnie! Teraz możesz się zalogować.');
-          this.isRegisterMode = false;
-        },
-        error: (err) => alert('Błąd: ' + (err.error?.message || 'Nieudana rejestracja'))
+        next: () => { alert('Zarejestrowano! Teraz się zaloguj.'); this.isRegisterMode = false; },
+        error: (err) => alert('Błąd: ' + (err.error?.message || 'Zły login'))
       });
     } else {
       this.setIdentity(name, pass);
@@ -44,68 +88,40 @@ export class App implements OnInit {
 
   setIdentity(name: string, pass: string) {
     const authString = 'Basic ' + btoa(`${name}:${pass}`);
-    localStorage.setItem('coffee_auth', authString);
-    localStorage.setItem('coffee_user', name);
-    this.currentUser = name;
-    this.loadAds();
-  }
 
-  logout() {
-    this.currentUser = '';
-    localStorage.removeItem('coffee_user');
-    localStorage.removeItem('coffee_auth');
-    this.ads = [];
-  }
-
-  saveAd() {
-    if (this.newAd.title && this.newAd.description) {
-      this.newAd.author = this.currentUser;
-      this.adService.addAd(this.newAd).subscribe(() => {
-        this.loadAds();
-        this.newAd = { title: '', description: '', category: '', author: '' };
-      });
-    }
-  }
-
-  markAsPresent(ad: any) {
-    if (ad.author === this.currentUser || ad.alreadyJoined) return;
-
-    this.adService.joinAd(ad.id).subscribe({
-      next: (updatedAd) => {
-        // Aktualizujemy tylko jeden element na liście, zamiast przeładowywać całość
-        const index = this.ads.findIndex(a => a.id === updatedAd.id);
-        if (index !== -1) {
-          this.ads[index] = { ...updatedAd, alreadyJoined: true };
-        }
-      },
-      error: (err) => console.error('Błąd:', err)
-    });
-  }
-
-
-  // Dodaj te metody do klasy App
-  removeAd(adId: number) {
-    if (confirm('Usunąć to ogłoszenie?')) {
-      this.adService.deleteAd(adId).subscribe({
-        next: () => this.loadAds(), // Odśwież listę po usunięciu
-        error: (err) => alert('Błąd: ' + (err.error || 'Brak uprawnień'))
-      });
-    }
-  }
-
-// Poprawione loadAds z obsługą participantNames
-  loadAds() {
-    this.adService.getAds().subscribe({
+    // Kluczowa zmiana: Pytamy serwer czy dane są dobre PRZED ustawieniem użytkownika
+    this.adService.getAdsWithAuth(authString).subscribe({
       next: (data: any[]) => {
-        this.ads = data.map(ad => ({
-          ...ad,
-          participantNames: ad.participantNames || []
-        }));
+        // Serwer autoryzował zapytanie, wpuszczamy użytkownika
+        localStorage.setItem('coffee_auth', authString);
+        localStorage.setItem('coffee_user', name);
+        this.currentUser = name;
+        this.ads = data.map(ad => ({ ...ad, participantNames: ad.participantNames || [] }));
+      },
+      error: (err) => {
+        // Serwer odrzucił logowanie
+        alert('Zły login lub hasło!');
+        this.logout();
       }
     });
   }
 
-  trackByAdId(index: number, ad: any): number {
-    return ad.id;
+  markAsPresent(ad: any) {
+    if (ad.author === this.currentUser || ad.participantNames?.includes(this.currentUser)) return;
+    this.adService.joinAd(ad.id).subscribe({ next: () => this.loadAds() });
   }
+
+  removeAd(adId: number) {
+    if (confirm('Usunąć?')) {
+      this.adService.deleteAd(adId).subscribe({ next: () => this.loadAds() });
+    }
+  }
+
+  logout() {
+    localStorage.clear();
+    this.currentUser = '';
+    this.ads = [];
+  }
+
+  trackByAdId(index: number, ad: any): number { return ad.id; }
 }

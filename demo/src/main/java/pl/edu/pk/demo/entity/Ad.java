@@ -14,20 +14,13 @@ public class Ad {
     private String category;
     private String author;
 
-    // Przechowujemy unikalne nazwy użytkowników (wymóg logiczny na 5.0)
+    // Zainicjalizowanie HashSet rozwiązuje błąd 500 przy zapisie do bazy
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> participantNames = new HashSet<>();
 
     public Ad() {}
 
-    public Ad(String title, String description, String category, String author) {
-        this.title = title;
-        this.description = description;
-        this.category = category;
-        this.author = author;
-    }
-
-    // Gettery i Settery (naprawiają błędy kompilacji w AdService.java)
+    // Gettery i Settery (Muszą być wszystkie!)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
@@ -39,9 +32,5 @@ public class Ad {
     public String getAuthor() { return author; }
     public void setAuthor(String author) { this.author = author; }
     public Set<String> getParticipantNames() { return participantNames; }
-
-    // Zwraca rozmiar kolekcji dla frontendu
-    public int getParticipantsCount() {
-        return participantNames != null ? participantNames.size() : 0;
-    }
+    public void setParticipantNames(Set<String> participantNames) { this.participantNames = participantNames; }
 }

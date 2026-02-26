@@ -2,7 +2,7 @@ package pl.edu.pk.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import pl.edu.pk.demo.dto.AdDTO;
+import pl.edu.pk.demo.dto.AdRequestDTO;
 import pl.edu.pk.demo.entity.Ad;
 import pl.edu.pk.demo.repository.AdRepository;
 import java.util.List;
@@ -16,11 +16,12 @@ public class AdService {
         return adRepository.findAll();
     }
 
-    public Ad createAd(AdDTO adDTO) {
+    public Ad createAd(AdRequestDTO dto, String authorName) {
         Ad ad = new Ad();
-        ad.setTitle(adDTO.getTitle());
-        ad.setDescription(adDTO.getDescription());
-        ad.setCategory(adDTO.getCategory());
+        ad.setTitle(dto.title());
+        ad.setDescription(dto.description());
+        ad.setCategory(dto.category());
+        ad.setAuthor(authorName); // Bezpieczne przypisanie autora
         return adRepository.save(ad);
     }
 }

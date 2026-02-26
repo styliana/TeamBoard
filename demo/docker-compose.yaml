@@ -4,7 +4,6 @@ services:
   db:
     image: postgres:16
     container_name: coffee_db
-    restart: always
     environment:
       - POSTGRES_DB=coffee_db
       - POSTGRES_USER=user
@@ -12,8 +11,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # To jest kluczowy element - wolumen, dzięki któremu baza nie znika
       - postgres_data:/var/lib/postgresql/data
-
 volumes:
   postgres_data:

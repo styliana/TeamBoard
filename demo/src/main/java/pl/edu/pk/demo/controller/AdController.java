@@ -1,12 +1,15 @@
 package pl.edu.pk.demo.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.pk.demo.dto.AdRequestDTO;
 import pl.edu.pk.demo.entity.Ad;
 import pl.edu.pk.demo.service.AdService;
 import pl.edu.pk.demo.repository.AdRepository;
+import pl.edu.pk.demo.event.UserJoinedEvent;
+
 import java.security.Principal;
 import java.util.List;
 
@@ -16,10 +19,13 @@ import java.util.List;
 public class AdController {
     private final AdService adService;
     private final AdRepository repository;
+    private final ApplicationEventPublisher eventPublisher; // Narzędzie do wysyłania zdarzeń
 
-    public AdController(AdService adService, AdRepository repository) {
+    // Dodaliśmy eventPublisher do konstruktora
+    public AdController(AdService adService, AdRepository repository, ApplicationEventPublisher eventPublisher) {
         this.adService = adService;
         this.repository = repository;
+        this.eventPublisher = eventPublisher;
     }
 
     @GetMapping
@@ -37,7 +43,12 @@ public class AdController {
         Ad ad = repository.findById(id).orElseThrow(() -> new RuntimeException("Nie znaleziono!"));
         if (!ad.getParticipantNames().contains(principal.getName())) {
             ad.getParticipantNames().add(principal.getName());
-            return repository.save(ad);
+            Ad savedAd = repository.save(ad);
+
+            // KLUCZOWE: Publikujemy zdarzenie!
+            eventPublisher.publishEvent(new UserJoinedEvent(this, ad.getTitle(), ad.getAuthor(), principal.getName()));
+
+            return savedAd;
         }
         return ad;
     }

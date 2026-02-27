@@ -13,8 +13,8 @@ public class NotificationListener {
 
     @EventListener
     public void handleUserJoinedEvent(UserJoinedEvent event) {
-        // Profesjonalny log (zamiast System.out.println)
-        logger.info("🔔 SYSTEM POWIADOMIEŃ: Użytkownik '{}' wpadnie na kawę '{}' (Autor: {})",
+        // Tekst bez polskich znaków i emoji - w 100% bezpieczny dla każdej konsoli
+        logger.info("[SYSTEM POWIADOMIEN]: Uzytkownik '{}' wpadnie na kawe '{}' (Autor: {})",
                 event.getParticipant(), event.getAdTitle(), event.getAuthor());
     }
 }
